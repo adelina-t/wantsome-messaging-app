@@ -1,6 +1,6 @@
 ## SERVER
 
-- improve logging
+# - improve logging DONE using log levels
 - Direct / private messages between users
 - List chat users - http ( not enforced, could be ws if so desired )
 - Multiple rooms - users can chat on different rooms
@@ -22,7 +22,7 @@ Nice to have, but not required:
 
 ## CLIENT
 
-- accept input from stdin
+# - accept input from stdin DONE for message every time and username only once at start
 - quit / disconnect 
 - config server connection params: - url etc 
     - options:

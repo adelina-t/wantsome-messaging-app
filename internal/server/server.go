@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
+	//"syscall"
 )
 
-var shutdown os.Signal = syscall.SIGUSR1
+// var shutdown os.Signal = syscall.SIGUSR1
+var shutdown = os.Interrupt
 
 func RunServer() {
 	http.HandleFunc("/", home)
