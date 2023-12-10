@@ -1,6 +1,9 @@
 package models
 
 type Message struct {
-	Message  string
-	UserName string
+	UserName  string
+	Recipient string
+	Message   string
+	Type      string
+	Room      string
 }
