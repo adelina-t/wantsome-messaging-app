@@ -1,51 +1,77 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
-	"time"
+	"net/http"
+	"os"
+	"os/signal"
 
 	"github.com/gorilla/websocket"
+	"wantsome.ro/messagingapp/internal/config"
 	"wantsome.ro/messagingapp/pkg/models"
 )
 
-func RunClient() {
-	url := "ws://localhost:8080/ws"
-	randId := rand.Intn(10)
-	message := models.Message{Message: fmt.Sprintf("Hello world from my client %d !", randId), UserName: fmt.Sprintf("Client %d", randId)}
-
-	c, _, err := websocket.DefaultDialer.Dial(url, nil)
+func RunClientChat() error {
+	// get client config
+	clientCfg, err := config.GetClientConfig()
 	if err != nil {
-		log.Fatalf("error dialing %s\n", err)
+		return fmt.Errorf("error getting client config: %s", err)
 	}
-	defer c.Close()
 
-	done := make(chan bool)
-	// reading server messages
+	// get server config
+	serverCfg := config.GetServerConfig()
+	serverUrl := fmt.Sprintf("ws://%s:%s/ws", serverCfg.Address, serverCfg.Port)
+
+	// connect to server
+	requestHeader := http.Header{
+		"Client-ID": []string{clientCfg.ClientID},
+		"Room-ID":   []string{clientCfg.RoomID},
+	}
+	conn, _, err := websocket.DefaultDialer.Dial(serverUrl, requestHeader)
+	if err != nil {
+		return fmt.Errorf("error dialing server: %s", err)
+	}
+
+	// add signal handler for graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	// print chat messages
 	go func() {
-		defer close(done)
+		defer close(stop)
 		for {
-			_, message, err := c.ReadMessage()
+			_, message, err := conn.ReadMessage()
 			if err != nil {
-				log.Printf("error reading: %s\n", err)
+				log.Printf("error reading server meessage: %s", err)
 				return
 			}
-			fmt.Printf("Got message: %s\n", message)
+			msg := models.Message{}
+			if err := json.Unmarshal(message, &msg); err != nil {
+				log.Printf("error unmarshalling server message: %s", err)
+				return
+			}
+			prefix := ""
+			if msg.From != "" {
+				// message from another client
+				prefix = msg.From
+				if msg.To != "" {
+					// private message
+					prefix += fmt.Sprintf(" -> %s (private)", msg.To)
+				}
+				prefix += ": "
+			}
+			fmt.Printf("%s%s\n", prefix, msg.Content)
 		}
 	}()
 
-	// writing messages to server
-	go func() {
-		for {
-			err := c.WriteJSON(message)
-			if err != nil {
-				log.Printf("error writing %s\n", err)
-				return
-			}
-			time.Sleep(3 * time.Second)
-		}
-	}()
+	// Disconnect client when the user presses Ctrl+C or connection is closed
+	<-stop
+	log.Printf("Exit client...")
+	if err := conn.Close(); err != nil {
+		log.Printf("error closing connection: %s", err)
+	}
 
-	<-done
+	return nil
 }
