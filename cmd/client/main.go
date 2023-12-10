@@ -1,7 +1,13 @@
 package main
 
-import "wantsome.ro/messagingapp/internal/client"
+import (
+	"log"
+
+	"wantsome.ro/messagingapp/internal/client"
+)
 
 func main() {
-	client.RunClient()
+	if err := client.RunClientChat(); err != nil {
+		log.Fatalf("error running server: %s", err)
+	}
 }
