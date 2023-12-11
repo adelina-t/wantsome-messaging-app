@@ -14,14 +14,14 @@ var shutdown os.Signal = syscall.SIGKILL
 
 var ServerLogger utils.Logger
 
-func RunServer() {
+func RunServer(host string, port string) {
 	http.HandleFunc("/", home)
 	http.HandleFunc("/rooms/", handleRoomConnection)
 	http.HandleFunc("/chat/", handlePrivateChatConnection)
 
 	go handlePrivateMessage()
 
-	server := &http.Server{Addr: ":8080"}
+	server := &http.Server{Addr: host + ":" + port}
 
 	ServerLogger = utils.InitLogger()
 	go ServerLogger.WriteToFileService()
