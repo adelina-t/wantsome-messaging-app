@@ -14,6 +14,10 @@ type SafeTypeRoomList struct {
 	m        sync.Mutex
 }
 
+type RoomUserList struct {
+	RoomUserList string `json:"roomUserList"`
+}
+
 func (safeRoomList *SafeTypeRoomList) AddNewRoom(newRoom models.SafeRoom) {
 	safeRoomList.m.Lock()
 	safeRoomList.roomList = append(safeRoomList.roomList, newRoom)
@@ -56,7 +60,12 @@ func listRoomUsers(safeRoom models.SafeRoom, conn *websocket.Conn) {
 	for _, username := range safeRoom.Room.UserChatList {
 		userList += username + "\n"
 	}
-	err := conn.WriteJSON(userList)
+
+	roomUserListStruct := RoomUserList{
+		RoomUserList: userList,
+	}
+
+	err := conn.WriteJSON(roomUserListStruct)
 	if err != nil {
 		fmt.Printf("got error listing users to chat %s", err)
 		conn.Close()
