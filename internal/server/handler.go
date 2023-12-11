@@ -97,14 +97,12 @@ func handleRoomConnection(w http.ResponseWriter, r *http.Request) {
 		} else {
 			msg.UserName = connRoom.Room.UserChatList[conn]
 
-			if len(msg.Message) == 0 {
-				logMessage = fmt.Sprintf("Empty message! User: %s", msg.UserName)
-				ServerLogger.Log(logMessage, loggerMethod, models.LogLevel(2))
-			}
-			if !isCommand(msg.Message) {
-				connRoom.Room.RoomBroadcast <- msg
-			} else {
-				listRoomUsers(connRoom, conn)
+			if msg.Message != "" {
+				if !isCommand(msg.Message) {
+					connRoom.Room.RoomBroadcast <- msg
+				} else {
+					listRoomUsers(connRoom, conn)
+				}
 			}
 		}
 
@@ -148,7 +146,12 @@ func handlePrivateChatConnection(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if msg.ReceivingUser != "" && msg.Message != "" {
-			privateChatList.chatBroadcast <- msg
+			if isCommand(msg.Message) {
+				listChatUsers(&privateChatList, conn)
+			} else {
+				msg.SendingUser = privateChatList.privateChatList[conn]
+				privateChatList.chatBroadcast <- msg
+			}
 		}
 	}
 

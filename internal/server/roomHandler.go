@@ -34,6 +34,7 @@ func handleRoomMessages(safeRoom *models.SafeRoom) {
 		msg := <-safeRoom.Room.RoomBroadcast
 
 		safeRoom.RoomMutex.Lock()
+		ServerLogger.Log("WritingMessage", logMethod, models.LogLevel(0))
 		for client, username := range safeRoom.Room.UserChatList {
 			if username != msg.UserName {
 				err := client.WriteJSON(msg)

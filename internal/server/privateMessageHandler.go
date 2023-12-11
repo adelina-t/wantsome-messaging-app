@@ -14,6 +14,10 @@ type SafePrivateChatList struct {
 	chatBroadcast   chan models.PrivateMessage
 }
 
+type UserList struct {
+	UserList string `json:"userList"`
+}
+
 func handlePrivateMessage() {
 	loggerMethod := "handlePrivateMessage"
 	loggerMessage := ""
@@ -44,4 +48,25 @@ func (safeChatList *SafePrivateChatList) GetUserConnection(desiredUser string) *
 		}
 	}
 	return nil
+}
+
+func listChatUsers(safePrivateChatList *SafePrivateChatList, conn *websocket.Conn) {
+	logMethod := "listChatUsers"
+	logMessage := ""
+	userListString := ""
+	safePrivateChatList.chatListMutex.Lock()
+	for _, username := range safePrivateChatList.privateChatList {
+		userListString += username + "\n"
+	}
+	userListStruct := UserList{
+		UserList: userListString,
+	}
+	err := conn.WriteJSON(userListStruct)
+	if err != nil {
+		logMessage = fmt.Sprintf("Error sending the chat list %s", err)
+		ServerLogger.Log(logMessage, logMethod, models.Error)
+		conn.Close()
+		delete(safePrivateChatList.privateChatList, conn)
+	}
+	safePrivateChatList.chatListMutex.Unlock()
 }

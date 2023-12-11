@@ -1,0 +1,58 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WA Chat APP client</title>
+    <script src="client.js"></script>
+    <link rel="stylesheet" href="client.css">
+    
+</head>
+<body>
+    <label for="Username">Username:</label>
+    <input type="text" name="Username" id="UsernameInput">
+    <button onclick="connect()">Connect</button>
+    
+    <div id="roomDiv">
+        <h2>Rooms</h2>
+        <div id="roomListContainer">
+            <ul id="roomList">
+
+            </ul>
+        </div>
+        <div id="roomController"></div>
+        <textarea placeholder="Your message here!" name="roomChatTextArea" id="roomChatTextArea" cols="15" rows="3"></textarea>
+        <br><br>
+        <label for="roomName">Room Name:</label>
+        <input type="text" name="roomName" id="roomNameInput">
+        <button onclick="selectRoomChat()" id="roomSelectButton">Select</button>
+        <br>
+        <button onclick="sendRoomChatMessage()">Send</button>
+        <div id="roomChatWindow">
+
+        </div>
+    </div>
+
+    <div id="privateChatDiv">
+        <h2>Private Chat</h2>
+        <div id="chatListContainer">
+            <ul id = "chatList">
+
+            </ul>
+        </div>
+        <div id="chatController"></div>
+        <textarea placeholder="Your message here!" name="privateChatTextArea" id="privateChatTextArea" cols="15" rows="3"></textarea>
+        <br><br>
+        <label for="ReceiverChat">User to send:</label>
+        <input type="text" name="ReceiverChat" id="receiverInput">
+        <button onclick="selectPrivateChat()" id="chatSelectButton">Select</button>
+        <br>
+        <button onclick="sendPrivateMessage()">Send</button>
+        <div id="privateChatWindow">
+
+        </div>
+    </div>
+
+
+</body>
+</html>
