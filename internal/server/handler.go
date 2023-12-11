@@ -147,14 +147,14 @@ func handlePrivateChatConnection(w http.ResponseWriter, r *http.Request) {
 				privateChatList.privateChatList[conn] = msg.SendingUser
 			}
 		}
-		if msg.ReceivingUser != "" && msg.Message != "" {
+		if msg.Message != "" {
 			if isCommand(msg.Message) {
 				if msg.Message == "!list" {
 					listChatUsers(&privateChatList, conn)
 				} else if msg.Message == "!listRooms" {
 					listRooms(conn, &safeRoomList)
 				}
-			} else {
+			} else if msg.ReceivingUser != "" {
 				msg.SendingUser = privateChatList.privateChatList[conn]
 				privateChatList.chatBroadcast <- msg
 			}

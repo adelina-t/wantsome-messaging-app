@@ -40,6 +40,16 @@ function connect(e){
                 userListUL.appendChild(newUser);
             }
         }
+        else if (msg["roomList"] != undefined){
+            let roomListUL = document.querySelector("#roomList");
+            let roomListInp =  msg["roomList"].split("\n");
+            roomListUL.textContent = '';
+            for (let i = 0; i < roomListInp.length - 1; i++){
+                let newRoom = document.createElement("li");
+                newRoom.appendChild(document.createTextNode(roomListInp[i]));
+                roomListUL.appendChild(newRoom);
+            }
+        }
         else{
             let sendingUser = msg["SendingUser"];
             if (sendingUser != "" && sendingUser != null) {
