@@ -13,7 +13,7 @@ import (
 func RunClient() {
 	url := "ws://localhost:8080/ws"
 	randId := rand.Intn(10)
-	message := models.Message{Message: fmt.Sprintf("Hello world from my client %d !", randId), UserName: fmt.Sprintf("Client %d", randId)}
+	message := models.GeneralMessage{Message: fmt.Sprintf("Hello world from my client %d !", randId), UserName: fmt.Sprintf("Client %d", randId)}
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {

@@ -6,17 +6,25 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"wantsome.ro/messagingapp/pkg/utils"
 )
 
-var shutdown os.Signal = syscall.SIGUSR1
+var shutdown os.Signal = syscall.SIGKILL
 
-func RunServer() {
+var ServerLogger utils.Logger
+
+func RunServer(host string, port string) {
 	http.HandleFunc("/", home)
-	http.HandleFunc("/ws", handleConnections)
+	http.HandleFunc("/rooms/", handleRoomConnection)
+	http.HandleFunc("/chat/", handlePrivateChatConnection)
 
-	go handleMsg()
+	go handlePrivateMessage()
 
-	server := &http.Server{Addr: ":8080"}
+	server := &http.Server{Addr: host + ":" + port}
+
+	ServerLogger = utils.InitLogger()
+	go ServerLogger.WriteToFileService()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
@@ -32,15 +40,9 @@ func RunServer() {
 	signal := <-stop
 	log.Printf("Shutting down server ... ")
 
-	m.Lock()
-	for conn := range userConnections {
-		conn.Close()
-		delete(userConnections, conn)
-	}
-	m.Unlock()
-
 	server.Shutdown(nil)
 	if signal == shutdown {
+		ServerLogger.DeInitLogger()
 		os.Exit(1)
 	}
 
