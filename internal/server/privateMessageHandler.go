@@ -18,6 +18,10 @@ type UserList struct {
 	UserList string `json:"userList"`
 }
 
+type RoomList struct {
+	RoomList string `json:"roomList"`
+}
+
 func handlePrivateMessage() {
 	loggerMethod := "handlePrivateMessage"
 	loggerMessage := ""
@@ -69,4 +73,29 @@ func listChatUsers(safePrivateChatList *SafePrivateChatList, conn *websocket.Con
 		delete(safePrivateChatList.privateChatList, conn)
 	}
 	safePrivateChatList.chatListMutex.Unlock()
+}
+
+func listRooms(conn *websocket.Conn, safeRooms *SafeTypeRoomList) {
+	logMethod := "listChatUsers"
+	logMessage := ""
+	roomListString := ""
+
+	safeRooms.m.Lock()
+	for _, roomName := range safeRoomList.roomList {
+		roomListString += roomName.Room.RoomName + "\n"
+	}
+
+	roomListStruct := RoomList{
+		RoomList: roomListString,
+	}
+
+	err := conn.WriteJSON(roomListStruct)
+	if err != nil {
+		logMessage = fmt.Sprintf("Error sending the chat list %s", err)
+		ServerLogger.Log(logMessage, logMethod, models.Error)
+		conn.Close()
+	}
+
+	safeRooms.m.Unlock()
+
 }

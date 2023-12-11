@@ -101,7 +101,9 @@ func handleRoomConnection(w http.ResponseWriter, r *http.Request) {
 				if !isCommand(msg.Message) {
 					connRoom.Room.RoomBroadcast <- msg
 				} else {
-					listRoomUsers(connRoom, conn)
+					if msg.Message == "!listUsers" {
+						listRoomUsers(connRoom, conn)
+					}
 				}
 			}
 		}
@@ -147,7 +149,11 @@ func handlePrivateChatConnection(w http.ResponseWriter, r *http.Request) {
 		}
 		if msg.ReceivingUser != "" && msg.Message != "" {
 			if isCommand(msg.Message) {
-				listChatUsers(&privateChatList, conn)
+				if msg.Message == "!list" {
+					listChatUsers(&privateChatList, conn)
+				} else if msg.Message == "!listRooms" {
+					listRooms(conn, &safeRoomList)
+				}
 			} else {
 				msg.SendingUser = privateChatList.privateChatList[conn]
 				privateChatList.chatBroadcast <- msg
