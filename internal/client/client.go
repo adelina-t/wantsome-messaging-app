@@ -15,7 +15,7 @@ import (
 func RunClient() {
 	url := "ws://localhost:8080/ws"
 	randId := rand.Intn(10)
-	userName := fmt.Sprintf("Client %d", randId)
+	userName := fmt.Sprintf("Client%d", randId)
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
@@ -43,16 +43,31 @@ func RunClient() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			input := scanner.Text()
-			if strings.TrimSpace(input) == "quit" {
+			commands := strings.Split(input, " ")
+			switch commands[0] {
+			case "/quit":
 				close(done)
 				return
-			}
-
-			message := models.Message{Message: input, UserName: userName}
-			err := c.WriteJSON(message)
-			if err != nil {
-				log.Printf("error writing %s\n", err)
-				return
+			case "/private":
+				if len(commands) > 1 {
+					message := models.Message{
+						Message:   strings.Join(commands[1:], " "),
+						UserName:  userName,
+						Recipient: commands[1],
+					}
+					err := c.WriteJSON(message)
+					if err != nil {
+						log.Printf("error writing %s\n", err)
+						return
+					}
+				}
+			default:
+				message := models.Message{Message: input, UserName: userName}
+				err := c.WriteJSON(message)
+				if err != nil {
+					log.Printf("error writing %s\n", err)
+					return
+				}
 			}
 		}
 	}()
