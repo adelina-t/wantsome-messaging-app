@@ -1,10 +1,12 @@
 package client
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"math/rand"
-	"time"
+	"os"
+	"strings"
 
 	"github.com/gorilla/websocket"
 	"wantsome.ro/messagingapp/pkg/models"
@@ -13,7 +15,7 @@ import (
 func RunClient() {
 	url := "ws://localhost:8080/ws"
 	randId := rand.Intn(10)
-	message := models.Message{Message: fmt.Sprintf("Hello world from my client %d !", randId), UserName: fmt.Sprintf("Client %d", randId)}
+	userName := fmt.Sprintf("Client %d", randId)
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
@@ -22,7 +24,8 @@ func RunClient() {
 	defer c.Close()
 
 	done := make(chan bool)
-	// reading server messages
+
+	// Reading server messages
 	go func() {
 		defer close(done)
 		for {
@@ -35,17 +38,25 @@ func RunClient() {
 		}
 	}()
 
-	// writing messages to server
+	// Reading input from stdin
 	go func() {
-		for {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			input := scanner.Text()
+			if strings.TrimSpace(input) == "quit" {
+				close(done)
+				return
+			}
+
+			message := models.Message{Message: input, UserName: userName}
 			err := c.WriteJSON(message)
 			if err != nil {
 				log.Printf("error writing %s\n", err)
 				return
 			}
-			time.Sleep(3 * time.Second)
 		}
 	}()
 
 	<-done
+	c.Close()
 }
