@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
 
@@ -28,7 +29,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 func handleConnections(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Printf("got error upgrading connection %s\n", err)
+		log.Printf("got error upgrading connection %s\n", err)
 		return
 	}
 	defer conn.Close()
@@ -36,13 +37,13 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	m.Lock()
 	userConnections[conn] = ""
 	m.Unlock()
-	fmt.Printf("connected client!")
+	log.Printf("connected client!")
 
 	for {
 		var msg models.Message = models.Message{}
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			fmt.Printf("got error reading message %s\n", err)
+			log.Printf("got error reading message %s\n", err)
 			m.Lock()
 			delete(userConnections, conn)
 			m.Unlock()
@@ -60,13 +61,29 @@ func handleMsg() {
 		msg := <-broadcast
 
 		m.Lock()
-		for client, username := range userConnections {
-			if username != msg.UserName {
-				err := client.WriteJSON(msg)
-				if err != nil {
-					fmt.Printf("got error broadcating message to client %s", err)
-					client.Close()
-					delete(userConnections, client)
+		if msg.Recipient != "" {
+			// send direct message
+			for client, username := range userConnections {
+				if username == msg.Recipient {
+					err := client.WriteJSON(msg)
+					if err != nil {
+						log.Printf("Error sending direct message to %s: %s", msg.Recipient, err)
+						client.Close()
+						delete(userConnections, client)
+					}
+					break
+				}
+			}
+		} else {
+			// broadcast message
+			for client, username := range userConnections {
+				if username != msg.UserName {
+					err := client.WriteJSON(msg)
+					if err != nil {
+						log.Printf("got error broadcating message to client %s", err)
+						client.Close()
+						delete(userConnections, client)
+					}
 				}
 			}
 		}
