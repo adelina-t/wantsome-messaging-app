@@ -14,7 +14,7 @@ import (
 
 func RunClient() {
 	url := "ws://localhost:8080/ws"
-	randId := rand.Intn(10)
+	randId := rand.Intn(100)
 	userName := fmt.Sprintf("Client%d", randId)
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
@@ -22,6 +22,8 @@ func RunClient() {
 		log.Fatalf("error dialing %s\n", err)
 	}
 	defer c.Close()
+
+	log.Printf("Connected as user: %s", userName)
 
 	done := make(chan bool)
 
@@ -43,35 +45,42 @@ func RunClient() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			input := scanner.Text()
-			commands := strings.Split(input, " ")
-			switch commands[0] {
-			case "/quit":
-				close(done)
-				return
-			case "/private":
-				if len(commands) > 1 {
-					message := models.Message{
-						Message:   strings.Join(commands[1:], " "),
-						UserName:  userName,
-						Recipient: commands[1],
-					}
-					err := c.WriteJSON(message)
-					if err != nil {
-						log.Printf("error writing %s\n", err)
-						return
-					}
-				}
-			default:
+			if strings.HasPrefix(input, "/") {
+				handleCommands(c, userName, input)
+			} else {
 				message := models.Message{Message: input, UserName: userName}
-				err := c.WriteJSON(message)
-				if err != nil {
-					log.Printf("error writing %s\n", err)
-					return
-				}
+				sendMessage(c, message)
 			}
 		}
 	}()
-
 	<-done
 	c.Close()
+}
+
+// Process messages from users
+func handleCommands(c *websocket.Conn, user string, message string) {
+	commands := strings.Split(message, " ")
+	switch commands[0] {
+	case "/quit":
+		c.Close()
+	case "/private":
+		if len(commands) > 1 {
+			rcp, txt := commands[1], strings.Join(commands[2:], " ")
+			message := models.Message{Message: txt, UserName: user, Recipient: rcp}
+			sendMessage(c, message)
+		}
+	case "/list-users":
+		message := models.Message{Message: "/list-users", UserName: user}
+		sendMessage(c, message)
+	default:
+		log.Printf("Unknown command")
+	}
+}
+
+func sendMessage(c *websocket.Conn, message models.Message) {
+	err := c.WriteJSON(message)
+	if err != nil {
+		log.Printf("error writing %s\n", err)
+		return
+	}
 }

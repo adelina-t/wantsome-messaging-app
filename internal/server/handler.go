@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -61,7 +62,25 @@ func handleMsg() {
 		msg := <-broadcast
 
 		m.Lock()
-		if msg.Recipient != "" {
+		if msg.Message == "/list-users" {
+			// Generate a list of user names
+			userList := []string{}
+			for _, userName := range userConnections {
+				userList = append(userList, userName)
+				log.Print(userList)
+			}
+
+			// Send the list back to the requesting user
+			for conn, userName := range userConnections {
+				if userName == msg.UserName {
+					err := conn.WriteJSON(models.Message{Message: "Online users: " + strings.Join(userList, " ")})
+					if err != nil {
+						log.Printf("Error sending user list: %s", err)
+					}
+					break
+				}
+			}
+		} else if msg.Recipient != "" {
 			// send direct message
 			for client, username := range userConnections {
 				if username == msg.Recipient {
