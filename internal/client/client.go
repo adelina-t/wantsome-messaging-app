@@ -85,6 +85,23 @@ func handleCommands(c *websocket.Conn, user string, message string) {
 			message := models.Message{Message: "/join", UserName: user, Room: currentRoom}
 			sendMessage(c, message)
 		}
+	case "/leave":
+		if len(commands) == 2 {
+			room := commands[1]
+			log.Printf("Leaving room: %s\n", room)
+			if currentRoom == room {
+				currentRoom = ""
+				log.Printf("Current room cleared")
+			}
+			message := models.Message{Message: "/leave", UserName: user, Room: room}
+			sendMessage(c, message)
+		} else {
+			log.Printf("Leaving room: %s\n", currentRoom)
+			message := models.Message{Message: "/leave", UserName: user, Room: currentRoom}
+			sendMessage(c, message)
+			currentRoom = ""
+			log.Printf("Current room cleared")
+		}
 	case "/switch":
 		if len(commands) == 2 {
 			room := commands[1]
@@ -92,9 +109,9 @@ func handleCommands(c *websocket.Conn, user string, message string) {
 			currentRoom = room
 		}
 	default:
-		log.Printf("Unknown command %s", message)
-		// message := models.Message{Message: message, UserName: user}
-		// sendMessage(c, message)
+		log.Printf("Sending universal command %s", message)
+		message := models.Message{Message: message, UserName: user}
+		sendMessage(c, message)
 	}
 }
 

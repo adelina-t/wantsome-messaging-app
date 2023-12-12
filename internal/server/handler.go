@@ -84,6 +84,10 @@ func processCommands(msg models.Message) {
 		listRooms(msg)
 	case "/join":
 		addUserToRoom(msg)
+	case "/leave":
+		removeUserFromRoom(msg)
+	case "/broadcast":
+		broadcastMessage(msg)
 	default:
 		log.Printf("Unknown command")
 	}
@@ -138,7 +142,16 @@ func addUserToRoom(msg models.Message) {
 				rooms[roomName] = make(map[*websocket.Conn]bool)
 			}
 			rooms[roomName][conn] = true
-			continue
+			break
+		}
+	}
+}
+
+func removeUserFromRoom(msg models.Message) {
+	for conn, userName := range userConnections {
+		if userName == msg.UserName {
+			delete(rooms[msg.Room], conn)
+			break
 		}
 	}
 }
