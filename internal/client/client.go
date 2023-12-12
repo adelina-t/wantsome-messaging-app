@@ -12,6 +12,8 @@ import (
 	"wantsome.ro/messagingapp/pkg/models"
 )
 
+var currentRoom string
+
 func RunClient() {
 	url := "ws://localhost:8080/ws"
 	randId := rand.Intn(100)
@@ -48,7 +50,7 @@ func RunClient() {
 			if strings.HasPrefix(input, "/") {
 				handleCommands(c, userName, input)
 			} else {
-				message := models.Message{Message: input, UserName: userName}
+				message := models.Message{Message: input, UserName: userName, Room: currentRoom}
 				sendMessage(c, message)
 			}
 		}
@@ -72,8 +74,27 @@ func handleCommands(c *websocket.Conn, user string, message string) {
 	case "/list-users":
 		message := models.Message{Message: "/list-users", UserName: user}
 		sendMessage(c, message)
+	case "/list-rooms":
+		message := models.Message{Message: "/list-rooms", UserName: user}
+		sendMessage(c, message)
+	case "/join":
+		if len(commands) == 2 {
+			room := commands[1]
+			log.Printf("Joined room: %s\n", room)
+			currentRoom = room
+			message := models.Message{Message: "/join", UserName: user, Room: currentRoom}
+			sendMessage(c, message)
+		}
+	case "/switch":
+		if len(commands) == 2 {
+			room := commands[1]
+			log.Printf("Switched to room: %s\n", room)
+			currentRoom = room
+		}
 	default:
-		log.Printf("Unknown command")
+		log.Printf("Unknown command %s", message)
+		// message := models.Message{Message: message, UserName: user}
+		// sendMessage(c, message)
 	}
 }
 
