@@ -171,19 +171,6 @@ func sendMessageToRoom(msg models.Message) {
 	}
 }
 
-func broadcastMessage(msg models.Message) {
-	for client, username := range userConnections {
-		if username != msg.UserName {
-			err := client.WriteJSON(msg)
-			if err != nil {
-				log.Printf("got error broadcating message to client %s", err)
-				client.Close()
-				delete(userConnections, client)
-			}
-		}
-	}
-}
-
 func sendDirectMessage(msg models.Message) {
 	for client, username := range userConnections {
 		if username == msg.Recipient {
@@ -194,6 +181,19 @@ func sendDirectMessage(msg models.Message) {
 				delete(userConnections, client)
 			}
 			break
+		}
+	}
+}
+
+func broadcastMessage(msg models.Message) {
+	for client, username := range userConnections {
+		if username != msg.UserName {
+			err := client.WriteJSON(msg)
+			if err != nil {
+				log.Printf("got error broadcating message to client %s", err)
+				client.Close()
+				delete(userConnections, client)
+			}
 		}
 	}
 }

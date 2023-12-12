@@ -9,15 +9,26 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"wantsome.ro/messagingapp/pkg/config"
 	"wantsome.ro/messagingapp/pkg/models"
 )
 
-var currentRoom string
+var (
+	currentRoom string
+	userName    string
+)
 
 func RunClient() {
-	url := "ws://localhost:8080/ws"
-	randId := rand.Intn(100)
-	userName := fmt.Sprintf("Client%d", randId)
+	// Load server configuration
+	cfg := config.LoadConfig()
+	url := "ws://" + cfg.URL + ":" + cfg.Port + "/ws"
+
+	if len(os.Args) < 2 {
+		randId := rand.Intn(100)
+		userName = fmt.Sprintf("Client%d", randId)
+	} else {
+		userName = os.Args[1]
+	}
 
 	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
