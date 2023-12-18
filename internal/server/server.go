@@ -6,17 +6,22 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"wantsome.ro/messagingapp/pkg/config"
 )
 
 var shutdown os.Signal = syscall.SIGUSR1
 
 func RunServer() {
+	// Load server configuration
+	cfg := config.LoadConfig()
+
 	http.HandleFunc("/", home)
 	http.HandleFunc("/ws", handleConnections)
 
 	go handleMsg()
 
-	server := &http.Server{Addr: ":8080"}
+	server := &http.Server{Addr: cfg.URL + ":" + cfg.Port}
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
